@@ -1,0 +1,30 @@
+server:
+  port: 3001
+
+spring:
+  application:
+    name: wedding-auth
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 8MB
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/wedding_auth?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:change-me}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+wedding:
+  cover-dir: ${WEDDING_COVER_DIR:../uploads/covers}
+  sms:
+    # 短信开发态：true 时 /sms/send 返回 devCode 明文，仅限本地开发；生产必须 false
+    dev-mode: ${SMS_DEV_MODE:false}
+
+logging:
+  level:
+    com.wedding: info

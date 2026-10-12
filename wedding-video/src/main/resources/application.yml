@@ -1,0 +1,29 @@
+server:
+  port: 3004
+
+spring:
+  application:
+    name: wedding-video
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 210MB
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/wedding_video?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:change-me}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+
+logging:
+  level:
+    com.wedding: info
+
+# 视频上传目录
+wedding:
+  upload-dir: ${WEDDING_UPLOAD_DIR:../uploads/videos}
+  # 封面图片目录（与包服务共享 covers 卷，用于删除旧封面物理文件）
+  cover-dir: ${WEDDING_COVER_DIR:../uploads/covers}

@@ -1,0 +1,184 @@
+version: "3.8"
+
+name: wedding-backend-v2
+
+# 敏感配置统一从 .env 读取（见 .env.example）。
+# 未创建 .env 时使用默认值，仅供本地开发。
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: wedding-mysql
+    restart: "no"
+    mem_limit: 512m
+    mem_reservation: 256m
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-me}
+      TZ: Asia/Shanghai
+    command: >-
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --innodb-buffer-pool-size=96M
+      --innodb-log-buffer-size=8M
+      --max-connections=60
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+    # 宿主 3306 已被本地 MySQL 占用，这里映射到 3307 避免冲突
+    ports:
+      - "3307:3306"
+
+  gateway:
+    build:
+      context: .
+      dockerfile: wedding-gateway/Dockerfile
+    container_name: wedding-gateway
+    restart: "no"
+    mem_limit: 320m
+    mem_reservation: 128m
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      AUTH_URL: http://auth:3001
+      PACKAGE_URL: http://package:3002
+      BOOKING_URL: http://booking:3003
+      VIDEO_URL: http://video:3004
+      MESSAGE_URL: http://message:3005
+      JWT_SECRET: ${JWT_SECRET:-change-me-at-least-32-bytes-random-secret}
+    ports:
+      - "3000:3000"
+    # 挂载运行时 CORS 覆盖配置（免重建镜像）：允许前端直连上传大视频
+    volumes:
+      - ./gateway-cors.yml:/app/application.yml:ro
+
+  auth:
+    build:
+      context: .
+      dockerfile: wedding-auth/Dockerfile
+    container_name: wedding-auth
+    restart: "no"
+    mem_limit: 320m
+    mem_reservation: 128m
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-me}
+      JWT_SECRET: ${JWT_SECRET:-change-me-at-least-32-bytes-random-secret}
+      # 短信验证码开发态开关：true 时 /sms/send 返回 devCode 明文（仅本地开发），生产务必为 false
+      SMS_DEV_MODE: ${SMS_DEV_MODE:-true}
+      # 微信一键登录（真机发布需填写真实小程序 AppID/Secret，未配置时开发态自动降级为模拟登录）
+      WX_APPID: ${WX_APPID:-}
+      WX_SECRET: ${WX_SECRET:-}
+      # 封面目录（与包服务共享 covers 卷，用于更换头像时删除旧文件）
+      WEDDING_COVER_DIR: /app/uploads/covers
+    volumes:
+      - covers:/app/uploads/covers
+    ports:
+      - "3001:3001"
+
+  package:
+    build:
+      context: .
+      dockerfile: wedding-package/Dockerfile
+    container_name: wedding-package
+    restart: "no"
+    mem_limit: 320m
+    mem_reservation: 128m
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-me}
+      JWT_SECRET: ${JWT_SECRET:-change-me-at-least-32-bytes-random-secret}
+      WEDDING_COVER_DIR: /app/uploads/covers
+    volumes:
+      - covers:/app/uploads/covers
+    ports:
+      - "3002:3002"
+
+  booking:
+    build:
+      context: .
+      dockerfile: wedding-booking/Dockerfile
+    container_name: wedding-booking
+    restart: "no"
+    mem_limit: 320m
+    mem_reservation: 128m
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-me}
+      JWT_SECRET: ${JWT_SECRET:-change-me-at-least-32-bytes-random-secret}
+    ports:
+      - "3003:3003"
+
+  video:
+    build:
+      context: .
+      dockerfile: wedding-video/Dockerfile
+    container_name: wedding-video
+    restart: "no"
+    mem_limit: 320m
+    mem_reservation: 128m
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-me}
+      JWT_SECRET: ${JWT_SECRET:-change-me-at-least-32-bytes-random-secret}
+      WEDDING_UPLOAD_DIR: /app/uploads/videos
+      # 封面目录（与包服务共享 covers 卷，用于删除旧封面物理文件）
+      WEDDING_COVER_DIR: /app/uploads/covers
+    volumes:
+      - video-data:/app/uploads/videos
+      - covers:/app/uploads/covers
+    ports:
+      - "3004:3004"
+
+  message:
+    build:
+      context: .
+      dockerfile: wedding-message/Dockerfile
+    container_name: wedding-message
+    restart: "no"
+    mem_limit: 320m
+    mem_reservation: 128m
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-me}
+      JWT_SECRET: ${JWT_SECRET:-change-me-at-least-32-bytes-random-secret}
+    ports:
+      - "3005:3005"
+
+volumes:
+  mysql-data:
+    name: wedding-backend_mysql-data
+  video-data:
+    name: wedding-backend_video-data
+  covers:
+    name: wedding-backend_covers

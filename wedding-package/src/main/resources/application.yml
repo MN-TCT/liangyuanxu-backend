@@ -1,0 +1,27 @@
+server:
+  port: 3002
+
+spring:
+  application:
+    name: wedding-package
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 8MB
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/wedding_package?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:change-me}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+
+logging:
+  level:
+    com.wedding: info
+
+# 套餐封面图上传目录
+wedding:
+  cover-dir: ${WEDDING_COVER_DIR:../uploads/covers}

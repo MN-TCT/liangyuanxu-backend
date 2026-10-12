@@ -1,0 +1,11 @@
+**/target/
+**/*.log
+logs/
+.env
+.env.*
+.git/
+.gitignore
+hs_err_pid*.log
+replay_pid*.log
+.idea/
+.vscode/

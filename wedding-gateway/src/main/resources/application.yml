@@ -1,0 +1,45 @@
+server:
+  port: 3000
+
+spring:
+  application:
+    name: wedding-gateway
+  cloud:
+    gateway:
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        cors-configurations:
+          '[/**]':
+            allowed-origin-patterns: "*"
+            allowed-methods: "*"
+            allowed-headers: "*"
+            allow-credentials: false
+      routes:
+        - id: auth
+          uri: ${AUTH_URL:http://localhost:3001}
+          predicates:
+            - Path=/api/auth/**
+        - id: package
+          uri: ${PACKAGE_URL:http://localhost:3002}
+          predicates:
+            - Path=/api/package/**
+        - id: booking
+          uri: ${BOOKING_URL:http://localhost:3003}
+          predicates:
+            - Path=/api/booking/**
+        - id: video
+          uri: ${VIDEO_URL:http://localhost:3004}
+          predicates:
+            - Path=/api/video/**
+        - id: message
+          uri: ${MESSAGE_URL:http://localhost:3005}
+          predicates:
+            - Path=/api/message/**
+        - id: message-ws
+          uri: ${MESSAGE_URL:http://localhost:3005}
+          predicates:
+            - Path=/ws/**
+
+logging:
+  level:
+    org.springframework.cloud.gateway: info

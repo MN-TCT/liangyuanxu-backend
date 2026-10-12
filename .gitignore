@@ -1,0 +1,33 @@
+# ===== 构建产物 =====
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# ===== 环境变量与密钥 =====
+.env
+.env.*
+!.env.example
+
+# ===== 日志 =====
+logs/
+*.log
+*.log.*
+
+# ===== 上传媒体（运行时数据） =====
+uploads/
+!uploads/.gitkeep
+
+# ===== 临时/测试文件 =====
+verify-out.txt
+*.tmp
+sql/*.png
+sql/*.json
+sql/*.txt
+
+# ===== IDE / OS =====
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db

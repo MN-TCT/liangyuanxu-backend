@@ -1,0 +1,49 @@
+# wedding-gateway 运行时覆盖配置（由 docker-compose 挂载，覆盖 jar 内 classpath application.yml）
+# 新增 globalcors：允许前端 dev 源 http://localhost:5666 直连网关上传大视频（绕过 vite proxy 的
+# "Data after Connection: close" 解析问题）；其余路由/端口与环境变量逻辑保持不变。
+server:
+  port: 3000
+
+spring:
+  application:
+    name: wedding-gateway
+  cloud:
+    gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowed-origins:
+              - "http://localhost:5666"
+            allowed-methods: "*"
+            allowed-headers: "*"
+            allow-credentials: true
+      routes:
+        - id: auth
+          uri: ${AUTH_URL:http://localhost:3001}
+          predicates:
+            - Path=/api/auth/**
+        - id: package
+          uri: ${PACKAGE_URL:http://localhost:3002}
+          predicates:
+            - Path=/api/package/**
+        - id: booking
+          uri: ${BOOKING_URL:http://localhost:3003}
+          predicates:
+            - Path=/api/booking/**
+        - id: video
+          uri: ${VIDEO_URL:http://localhost:3004}
+          predicates:
+            - Path=/api/video/**
+        - id: message
+          uri: ${MESSAGE_URL:http://localhost:3005}
+          predicates:
+            - Path=/api/message/**
+        # 咨询聊天 WebSocket（Spring Cloud Gateway 自动处理 Upgrade 头）
+        - id: message-ws
+          uri: ${MESSAGE_URL:http://localhost:3005}
+          predicates:
+            - Path=/ws/**
+
+logging:
+  level:
+    org.springframework.cloud.gateway: info
